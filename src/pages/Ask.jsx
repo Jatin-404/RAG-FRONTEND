@@ -193,7 +193,7 @@ export default function Ask() {
             <p style={s.welcomeSub}>Ask questions about your uploaded documents.<br />Answers are grounded in your knowledge base.</p>
             <div style={s.suggestions}>
               {SUGGESTIONS.map((text, i) => (
-                <button key={i} style={s.suggChip} onClick={() => handleSend(text)}>
+                <button className="chip focus-ring" key={i} style={s.suggChip} onClick={() => handleSend(text)}>
                   › {text}
                 </button>
               ))}
@@ -220,6 +220,7 @@ export default function Ask() {
       <div style={s.inputArea}>
         <div style={s.inputBox}>
           <input
+            className="focus-ring"
             style={s.input}
             placeholder="Ask Resolven AI about your documents..."
             value={input}
@@ -228,6 +229,7 @@ export default function Ask() {
             disabled={loading}
           />
           <button
+            className="btn-primary focus-ring"
             style={{ ...s.sendBtn, ...((!input.trim() || loading) ? s.sendBtnDisabled : {}) }}
             onClick={() => handleSend()}
             disabled={!input.trim() || loading}
@@ -247,39 +249,40 @@ export default function Ask() {
 }
 
 const s = {
-  page: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f4f7', overflow: 'hidden' },
-  topBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 28px', background: '#fff', borderBottom: '1px solid #e8e4f0', flexShrink: 0 },
-  topBarTitle: { fontSize: '14px', fontWeight: 600, color: '#1a1525' },
-  modelBadge: { display: 'flex', alignItems: 'center', gap: '6px', background: '#f5f4f7', border: '1px solid #e8e4f0', borderRadius: '20px', padding: '4px 12px', fontSize: '12px', color: '#6b6480', fontWeight: 500 },
-  modelDot: { width: '6px', height: '6px', borderRadius: '50%', background: '#6d4aff' },
+  page: { display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--app-bg)', overflow: 'hidden' },
+  topBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 28px', background: 'rgba(255, 255, 255, 0.85)', borderBottom: '1px solid var(--border)', flexShrink: 0, backdropFilter: 'blur(6px)' },
+  topBarTitle: { fontSize: '14px', fontWeight: 600, color: 'var(--text)' },
+  modelBadge: { display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '4px 12px', fontSize: '12px', color: 'var(--text-2)', fontWeight: 500 },
+  modelDot: { width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)' },
   messagesArea: { flex: 1, overflow: 'auto', padding: '0 28px' },
   welcome: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', gap: '16px' },
-  welcomeIcon: { width: '64px', height: '64px', background: 'linear-gradient(135deg, #6d4aff, #a78bfa)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' },
+  welcomeIcon: { width: '64px', height: '64px', background: 'var(--accent-grad)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px', boxShadow: 'var(--shadow)' },
   welcomeSymbol: { color: '#fff', fontSize: '28px' },
-  welcomeTitle: { fontSize: '22px', fontWeight: 700, color: '#1a1525' },
-  welcomeSub: { fontSize: '14px', color: '#6b6480', lineHeight: 1.7 },
+  welcomeTitle: { fontSize: '22px', fontWeight: 700, color: 'var(--text)' },
+  welcomeSub: { fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.7 },
   suggestions: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '8px', maxWidth: '560px' },
-  suggChip: { background: '#fff', border: '1px solid #e8e4f0', borderRadius: '20px', padding: '8px 16px', fontSize: '13px', color: '#6b6480', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' },
+  suggChip: { background: 'rgba(255, 255, 255, 0.9)', border: '1px solid var(--border)', borderRadius: '20px', padding: '8px 16px', fontSize: '13px', color: 'var(--text-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', boxShadow: 'var(--shadow-sm)' },
   messagesList: { padding: '24px 0', display: 'flex', flexDirection: 'column', gap: '20px' },
   userMsgRow: { display: 'flex', justifyContent: 'flex-end' },
-  userMsg: { background: '#6d4aff', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '12px 16px', fontSize: '14px', lineHeight: 1.6, maxWidth: '70%' },
+  userMsg: { background: 'var(--accent)', color: '#fff', borderRadius: '16px 16px 4px 16px', padding: '12px 16px', fontSize: '14px', lineHeight: 1.6, maxWidth: '70%', boxShadow: 'var(--shadow-sm)' },
   aiMsgRow: { display: 'flex', gap: '12px', alignItems: 'flex-start' },
-  aiAvatar: { width: '32px', height: '32px', flexShrink: 0, background: 'linear-gradient(135deg, #6d4aff, #a78bfa)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px' },
+  aiAvatar: { width: '32px', height: '32px', flexShrink: 0, background: 'var(--accent-grad)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', boxShadow: 'var(--shadow-sm)' },
   aiMsgContent: { flex: 1, maxWidth: '75%' },
-  aiAnswer: { background: '#fff', border: '1px solid #e8e4f0', borderRadius: '4px 16px 16px 16px', padding: '12px 16px', fontSize: '14px', lineHeight: 1.7, color: '#1a1525' },
+  aiAnswer: { background: 'rgba(255, 255, 255, 0.92)', border: '1px solid var(--border)', borderRadius: '4px 16px 16px 16px', padding: '12px 16px', fontSize: '14px', lineHeight: 1.7, color: 'var(--text)', boxShadow: 'var(--shadow-sm)' },
   sourcesWrap: { marginTop: '8px' },
-  sourcesLabel: { fontSize: '11px', color: '#9b94b0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' },
+  sourcesLabel: { fontSize: '11px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' },
   sourcesList: { display: 'flex', flexWrap: 'wrap', gap: '6px' },
-  sourceChip: { display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', border: '1px solid #e8e4f0', borderRadius: '20px', padding: '4px 10px', fontSize: '12px', color: '#6b6480' },
-  sourceScore: { color: '#6d4aff', fontWeight: 600, fontFamily: 'DM Mono, monospace', fontSize: '11px' },
+  sourceChip: { display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 255, 255, 0.9)', border: '1px solid var(--border)', borderRadius: '20px', padding: '4px 10px', fontSize: '12px', color: 'var(--text-2)' },
+  sourceScore: { color: 'var(--accent)', fontWeight: 600, fontFamily: 'DM Mono, monospace', fontSize: '11px' },
   thinkingDots: { display: 'flex', gap: '4px', alignItems: 'center', padding: '16px' },
-  dot: { width: '8px', height: '8px', borderRadius: '50%', background: '#6d4aff', display: 'inline-block', animation: 'bounce 1.2s ease-in-out infinite' },
-  inputArea: { padding: '16px 28px 20px', background: '#fff', borderTop: '1px solid #e8e4f0', flexShrink: 0 },
-  inputBox: { display: 'flex', gap: '8px', background: '#f5f4f7', border: '1.5px solid #e8e4f0', borderRadius: '14px', padding: '8px 8px 8px 16px', alignItems: 'center' },
-  input: { flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', color: '#1a1525', fontFamily: 'DM Sans, sans-serif' },
-  sendBtn: { width: '36px', height: '36px', background: '#6d4aff', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  sendBtnDisabled: { background: '#e8e4f0', color: '#9b94b0', cursor: 'not-allowed' },
-  inputHint: { fontSize: '11px', color: '#9b94b0', marginTop: '8px', textAlign: 'center' },
+  dot: { width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', display: 'inline-block', animation: 'bounce 1.2s ease-in-out infinite' },
+  inputArea: { padding: '16px 28px 20px', background: 'rgba(255, 255, 255, 0.9)', borderTop: '1px solid var(--border)', flexShrink: 0, backdropFilter: 'blur(6px)' },
+  inputBox: { display: 'flex', gap: '8px', background: 'var(--surface-2)', border: '1.5px solid var(--border)', borderRadius: '14px', padding: '8px 8px 8px 16px', alignItems: 'center', boxShadow: 'var(--shadow-sm)' },
+  input: { flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', color: 'var(--text)', fontFamily: 'DM Sans, sans-serif' },
+  sendBtn: { width: '36px', height: '36px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: 'var(--shadow-sm)' },
+  sendBtnDisabled: { background: 'var(--border)', color: 'var(--text-3)', cursor: 'not-allowed' },
+  inputHint: { fontSize: '11px', color: 'var(--text-3)', marginTop: '8px', textAlign: 'center' },
   centerMsg: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' },
-  loadingText: { color: '#9b94b0', fontSize: '14px' }
+  loadingText: { color: 'var(--text-3)', fontSize: '14px' }
 }
+

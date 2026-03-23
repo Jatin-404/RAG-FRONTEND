@@ -152,7 +152,7 @@ export default function Upload() {
             <div style={s.fileListHeader}>
               <span style={s.fileListLabel}>Files</span>
               {allDone && successCount > 0 && (
-                <button style={s.clearBtn} onClick={clearCompleted}>Clear completed</button>
+                <button className="btn-link focus-ring" style={s.clearBtn} onClick={clearCompleted}>Clear completed</button>
               )}
             </div>
             {fileJobs.map((job, i) => (
@@ -167,6 +167,7 @@ export default function Upload() {
             <span style={s.doneText}>✓ {successCount}/{fileJobs.length} ingested</span>
           )}
           <button
+            className="btn-primary focus-ring"
             style={{
               ...s.uploadBtn,
               ...((fileJobs.length === 0 || uploading) ? s.uploadBtnDisabled : {})
@@ -185,51 +186,51 @@ export default function Upload() {
 }
 
 const s = {
-  page: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f4f7', overflow: 'hidden' },
+  page: { display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', background: 'var(--app-bg)', overflow: 'hidden' },
   topBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 28px', background: '#fff', borderBottom: '1px solid #e8e4f0', flexShrink: 0
+    padding: '14px 28px', width: '100%', background: 'rgba(255, 255, 255, 0.85)', borderBottom: '1px solid var(--border)', flexShrink: 0, backdropFilter: 'blur(6px)'
   },
-  topBarTitle: { fontSize: '14px', fontWeight: 600, color: '#1a1525' },
-  fileCount: { fontSize: '12px', color: '#6b6480', background: '#f5f4f7', border: '1px solid #e8e4f0', borderRadius: '20px', padding: '4px 12px' },
-  content: { flex: 1, overflow: 'auto', padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '680px', width: '100%', margin: '0 auto' },
+  topBarTitle: { fontSize: '14px', fontWeight: 600, color: 'var(--text)' },
+  fileCount: { fontSize: '12px', color: 'var(--text-2)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '4px 12px' },
+  content: { flex: 1, overflow: 'auto', padding: '28px', display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '16px', width: '100%' },
   dropzone: {
-    background: '#fff', border: '2px dashed #d8d2eb',
+    background: 'rgba(255, 255, 255, 0.92)', border: '2px dashed var(--border-2)',
     borderRadius: '14px', padding: '40px 24px',
-    textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s'
+    textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)'
   },
-  dropActive: { border: '2px dashed #6d4aff', background: '#faf9ff' },
-  dropIcon: { fontSize: '24px', color: '#6d4aff', marginBottom: '10px' },
-  dropText: { fontSize: '14px', color: '#6b6480', marginBottom: '6px' },
-  dropLink: { color: '#6d4aff', fontWeight: 600 },
-  dropFormats: { fontSize: '12px', color: '#9b94b0', letterSpacing: '0.3px' },
-  fileList: { background: '#fff', borderRadius: '12px', border: '1px solid #e8e4f0', overflow: 'hidden' },
+  dropActive: { border: '2px dashed var(--accent)', background: 'var(--surface-3)' },
+  dropIcon: { fontSize: '24px', color: 'var(--accent)', marginBottom: '10px' },
+  dropText: { fontSize: '14px', color: 'var(--text-2)', marginBottom: '6px' },
+  dropLink: { color: 'var(--accent)', fontWeight: 600 },
+  dropFormats: { fontSize: '12px', color: 'var(--text-3)', letterSpacing: '0.3px' },
+  fileList: { background: 'rgba(255, 255, 255, 0.92)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' },
   fileListHeader: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '10px 16px', borderBottom: '1px solid #f0eef5'
+    padding: '10px 16px', borderBottom: '1px solid var(--border)'
   },
-  fileListLabel: { fontSize: '11px', fontWeight: 600, color: '#9b94b0', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  clearBtn: { background: 'none', border: 'none', color: '#6d4aff', fontSize: '12px', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' },
+  fileListLabel: { fontSize: '11px', fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  clearBtn: { background: 'none', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' },
   fileRow: {
     display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '12px 16px', borderBottom: '1px solid #f5f4f7'
+    padding: '12px 16px', borderBottom: '1px solid var(--surface-2)'
   },
   fileRowIcon: { fontSize: '22px', flexShrink: 0 },
   fileRowMid: { flex: 1, minWidth: 0 },
-  fileRowName: { fontSize: '13px', fontWeight: 500, color: '#1a1525', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  fileRowSize: { fontSize: '11px', color: '#9b94b0', marginTop: '2px' },
-  progressBar: { height: '3px', background: '#f0eef5', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' },
-  progressFill: { height: '100%', background: '#6d4aff', borderRadius: '2px', transition: 'width 0.4s ease' },
+  fileRowName: { fontSize: '13px', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  fileRowSize: { fontSize: '11px', color: 'var(--text-3)', marginTop: '2px' },
+  progressBar: { height: '3px', background: 'var(--surface-2)', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' },
+  progressFill: { height: '100%', background: 'var(--accent)', borderRadius: '2px', transition: 'width 0.4s ease' },
   fileRowStatus: { display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0, fontSize: '12px', fontWeight: 500 },
   spinDot: { fontSize: '10px' },
   statusLabel: {},
-  removeBtn: { background: 'none', border: 'none', color: '#d8d2eb', cursor: 'pointer', fontSize: '13px', padding: '4px', flexShrink: 0 },
+  removeBtn: { background: 'none', border: 'none', color: 'var(--border-2)', cursor: 'pointer', fontSize: '13px', padding: '4px', flexShrink: 0 },
   actions: { display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'flex-end' },
   doneText: { flex: 1, fontSize: '13px', color: '#16a34a', fontWeight: 500 },
   uploadBtn: {
-    padding: '11px 24px', background: '#6d4aff', color: '#fff',
+    padding: '11px 24px', background: 'var(--accent)', color: '#fff',
     border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
-    cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'DM Sans, sans-serif'
+    cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'DM Sans, sans-serif', boxShadow: 'var(--shadow-sm)'
   },
-  uploadBtnDisabled: { background: '#e8e4f0', color: '#9b94b0', cursor: 'not-allowed' }
+  uploadBtnDisabled: { background: 'var(--border)', color: 'var(--text-3)', cursor: 'not-allowed' }
 }

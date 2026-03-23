@@ -83,6 +83,7 @@ export default function Documents() {
           <div style={s.searchBar}>
             <span style={s.searchIcon}>⌕</span>
             <input
+              className="focus-ring"
               style={s.searchInput}
               placeholder="Search by filename or department..."
               value={search}
@@ -148,12 +149,13 @@ export default function Documents() {
                   </div>
                   <div style={{ ...s.td, width: '48px', justifyContent: 'center' }}>
                     <button
+                      className="btn-ghost delete-btn focus-ring"
                       style={{ ...s.deleteBtn, ...(deleting === doc.document_id ? s.deletingBtn : {}) }}
                       onClick={() => handleDelete(doc.document_id, doc.filename)}
                       disabled={deleting === doc.document_id}
                       title="Delete"
                     >
-                      {deleting === doc.document_id ? '…' : '🗑'}
+                      {deleting === doc.document_id ? '…' : (<svg viewBox="0 0 24 24" style={s.deleteIcon} aria-hidden="true"><path d="M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9zM6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7z" fill="currentColor" /></svg>)}
                     </button>
                   </div>
                 </div>
@@ -173,64 +175,65 @@ export default function Documents() {
 }
 
 const s = {
-  page: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f4f7', overflow: 'hidden' },
+  page: { display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', background: 'var(--app-bg)', overflow: 'hidden' },
   topBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 28px', background: '#fff', borderBottom: '1px solid #e8e4f0', flexShrink: 0
+    padding: '14px 28px', width: '100%', background: 'rgba(255, 255, 255, 0.85)', borderBottom: '1px solid var(--border)', flexShrink: 0, backdropFilter: 'blur(6px)'
   },
-  topBarTitle: { fontSize: '14px', fontWeight: 600, color: '#1a1525' },
+  topBarTitle: { fontSize: '14px', fontWeight: 600, color: 'var(--text)' },
   topBarRight: { display: 'flex', gap: '8px' },
   statPill: {
     display: 'flex', alignItems: 'center', gap: '4px',
-    background: '#f5f4f7', border: '1px solid #e8e4f0',
+    background: 'var(--surface-2)', border: '1px solid var(--border)',
     borderRadius: '20px', padding: '4px 12px'
   },
-  statPillNum: { fontSize: '13px', fontWeight: 700, color: '#1a1525', fontFamily: 'DM Mono, monospace' },
-  statPillLabel: { fontSize: '12px', color: '#9b94b0' },
-  content: { flex: 1, overflow: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' },
+  statPillNum: { fontSize: '13px', fontWeight: 700, color: 'var(--text)', fontFamily: 'DM Mono, monospace' },
+  statPillLabel: { fontSize: '12px', color: 'var(--text-3)' },
+  content: { flex: 1, overflow: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '16px', width: '100%' },
   searchBar: {
     display: 'flex', alignItems: 'center', gap: '10px',
-    background: '#fff', border: '1px solid #e8e4f0',
-    borderRadius: '10px', padding: '10px 14px'
+    background: 'rgba(255, 255, 255, 0.92)', border: '1px solid var(--border)',
+    borderRadius: '10px', padding: '10px 14px', boxShadow: 'var(--shadow-sm)'
   },
-  searchIcon: { color: '#9b94b0', fontSize: '16px' },
+  searchIcon: { color: 'var(--text-3)', fontSize: '16px' },
   searchInput: {
     flex: 1, background: 'none', border: 'none', outline: 'none',
-    fontSize: '13px', color: '#1a1525', fontFamily: 'DM Sans, sans-serif'
+    fontSize: '13px', color: 'var(--text)', fontFamily: 'DM Sans, sans-serif'
   },
   table: {
-    background: '#fff', borderRadius: '12px',
-    border: '1px solid #e8e4f0', overflow: 'hidden'
+    background: 'rgba(255, 255, 255, 0.92)', borderRadius: '12px',
+    border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', width: '100%'
   },
   tableHeader: {
     display: 'flex', alignItems: 'center',
-    padding: '10px 16px', borderBottom: '1px solid #f0eef5',
-    background: '#faf9ff'
+    padding: '10px 16px', borderBottom: '1px solid var(--border)',
+    background: 'var(--surface-3)'
   },
-  th: { fontSize: '11px', fontWeight: 600, color: '#9b94b0', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  tableRow: { display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #f9f8fc' },
-  tableRowAlt: { background: '#fdfcff' },
+  th: { fontSize: '11px', fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  tableRow: { display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--surface-2)' },
+  tableRowAlt: { background: 'rgba(248, 247, 255, 0.6)' },
   td: { display: 'flex', alignItems: 'center' },
   fileIcon: { fontSize: '18px', flexShrink: 0 },
-  filename: { fontSize: '13px', fontWeight: 500, color: '#1a1525', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  filename: { fontSize: '13px', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   deptBadge: {
     display: 'inline-flex', alignItems: 'center', gap: '5px',
     padding: '3px 10px', borderRadius: '20px',
     fontSize: '11px', fontWeight: 600
   },
   deptDot: { width: '5px', height: '5px', borderRadius: '50%', flexShrink: 0 },
-  domainText: { fontSize: '12px', color: '#6b6480' },
-  chunkNum: { fontSize: '13px', fontWeight: 600, color: '#1a1525', fontFamily: 'DM Mono, monospace' },
-  dateText: { fontSize: '12px', color: '#9b94b0' },
+  domainText: { fontSize: '12px', color: 'var(--text-2)' },
+  chunkNum: { fontSize: '13px', fontWeight: 600, color: 'var(--text)', fontFamily: 'DM Mono, monospace' },
+  dateText: { fontSize: '12px', color: 'var(--text-3)' },
   deleteBtn: {
-    background: 'none', border: '1px solid #f0eef5',
+    background: 'none', border: '1px solid var(--border)',
     borderRadius: '6px', padding: '5px 8px',
     cursor: 'pointer', fontSize: '13px',
-    transition: 'all 0.15s', color: '#9b94b0'
+    transition: 'all 0.15s', color: 'var(--text-3)'
   },
+  deleteIcon: { width: '14px', height: '14px', display: 'block' },
   deletingBtn: { opacity: 0.4, cursor: 'not-allowed' },
   centerMsg: { display: 'flex', justifyContent: 'center', padding: '40px' },
-  loadingText: { color: '#9b94b0', fontSize: '14px' },
+  loadingText: { color: 'var(--text-3)', fontSize: '14px' },
   errorBox: {
     display: 'flex', alignItems: 'center', gap: '8px',
     padding: '14px', background: '#fef2f2',
@@ -239,6 +242,7 @@ const s = {
   },
   emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 24px', gap: '12px' },
   emptyIcon: { fontSize: '48px' },
-  emptyTitle: { fontSize: '16px', fontWeight: 600, color: '#6b6480' },
-  emptySub: { fontSize: '13px', color: '#9b94b0' }
+  emptyTitle: { fontSize: '16px', fontWeight: 600, color: 'var(--text-2)' },
+  emptySub: { fontSize: '13px', color: 'var(--text-3)' }
 }
+

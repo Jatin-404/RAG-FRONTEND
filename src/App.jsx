@@ -13,6 +13,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Upload />} />
             <Route path="/ask" element={<Ask />} />
+            <Route path="/ask/:sessionId" element={<Ask />} />
             <Route path="/documents" element={<Documents />} />
           </Routes>
         </main>

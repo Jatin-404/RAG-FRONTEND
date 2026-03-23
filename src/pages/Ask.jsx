@@ -1,202 +1,286 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import client from '../api/client'
 
-export default function Ask() {
-  const [question, setQuestion] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
+const SUGGESTIONS = [
+  'What is the leave policy?',
+  'What is the salary of Amit Sharma?',
+  'What documents are available?',
+  'Who works in the Engineering department?'
+]
 
-  const handleAsk = async () => {
-    if (!question.trim()) return
+function Message({ msg }) {
+  if (msg.role === 'user') {
+    return (
+      <div style={s.userMsgRow}>
+        <div style={s.userMsg}>{msg.content}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={s.aiMsgRow}>
+      <div style={s.aiAvatar}>✦</div>
+      <div style={s.aiMsgContent}>
+        <p style={s.aiAnswer}>{msg.content}</p>
+        {msg.sources?.length > 0 && (
+          <div style={s.sourcesWrap}>
+            <p style={s.sourcesLabel}>Sources</p>
+            <div style={s.sourcesList}>
+              {msg.sources.map((src, i) => (
+                <div key={i} style={s.sourceChip}>
+                  <span style={s.sourceFile}>📄 {src.filename}</span>
+                  {src.rerank_score > 0 && (
+                    <span style={s.sourceScore}>{src.rerank_score.toFixed(1)}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function Ask() {
+  const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const bottomRef = useRef()
+  const inputRef = useRef()
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
+
+  const handleSend = async (q) => {
+    const question = q || input.trim()
+    if (!question || loading) return
+    setInput('')
+    setMessages(prev => [...prev, { role: 'user', content: question }])
     setLoading(true)
-    setResult(null)
-    setError(null)
+
     try {
-      const res = await client.get('/api/v1/search/ask', { params: { q: question, top_k: 5 } })
-      setResult(res.data)
+      const res = await client.get('/api/v1/search/ask', {
+        params: { q: question, top_k: 5 }
+      })
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        content: res.data.answer,
+        sources: res.data.sources
+      }])
     } catch {
-      setError('Failed to get answer. Is the backend running?')
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        content: 'Failed to get a response. Please check that the backend is running.',
+        sources: []
+      }])
     } finally {
       setLoading(false)
     }
   }
 
+  const isEmpty = messages.length === 0
+
   return (
     <div style={s.page}>
-      <div style={s.header}>
-        <h1 style={s.title}>Ask AI</h1>
-        <p style={s.subtitle}>Ask questions about your uploaded documents. Answers are grounded in your data.</p>
+      {/* Top bar */}
+      <div style={s.topBar}>
+        <span style={s.topBarTitle}>Ask AI</span>
+        <div style={s.modelBadge}>
+          <span style={s.modelDot} />
+          llama3.1:8b
+        </div>
       </div>
 
-      <div style={s.inputCard}>
-        <input
-          style={s.input}
-          placeholder="e.g. What is the leave policy? What is Neha's salary?"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !loading && handleAsk()}
-        />
-        <button
-          style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
-          onClick={handleAsk}
-          disabled={loading}
-        >
-          {loading ? '...' : 'Ask'}
-        </button>
-      </div>
-
-      {error && (
-        <div style={s.errorBox}>
-          <span>⚠</span> {error}
-        </div>
-      )}
-
-      {loading && (
-        <div style={s.loadingBox}>
-          <div style={s.loadingDots}>
-            <span style={s.dot} />
-            <span style={s.dot} />
-            <span style={s.dot} />
-          </div>
-          <p style={s.loadingText}>Searching documents and generating answer...</p>
-        </div>
-      )}
-
-      {result && (
-        <div>
-          <div style={s.answerCard}>
-            <div style={s.answerHeader}>
-              <span style={s.aiLabel}>◈ AI Answer</span>
+      {/* Messages area */}
+      <div style={s.messagesArea}>
+        {isEmpty ? (
+          <div style={s.welcome}>
+            <div style={s.welcomeIcon}>
+              <span style={s.welcomeSymbol}>✦</span>
             </div>
-            <p style={s.answer}>{result.answer}</p>
+            <h2 style={s.welcomeTitle}>Welcome to Resolven AI</h2>
+            <p style={s.welcomeSub}>
+              Ask questions about your uploaded documents.<br />
+              Answers are grounded in your knowledge base.
+            </p>
+            <div style={s.suggestions}>
+              {SUGGESTIONS.map((s_text, i) => (
+                <button key={i} style={s.suggChip} onClick={() => handleSend(s_text)}>
+                  › {s_text}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <div style={s.sourcesSection}>
-            <p style={s.sourcesTitle}>Sources used ({result.sources.length})</p>
-            {result.sources.map((src, i) => (
-              <div key={i} style={s.sourceCard}>
-                <div style={s.sourceMeta}>
-                  <div style={s.sourceLeft}>
-                    <span style={s.sourceFile}>📄 {src.filename}</span>
-                    {src.custom_fields?.sheet && (
-                      <span style={s.sourceSheet}>Sheet: {src.custom_fields.sheet}</span>
-                    )}
-                    {src.department && src.department !== 'general' && (
-                      <span style={s.sourceDept}>{src.department}</span>
-                    )}
-                  </div>
-                  <div style={s.sourceRight}>
-                    <span style={s.scoreLabel}>Relevance</span>
-                    <span style={{
-                      ...s.score,
-                      color: src.rerank_score > 0 ? '#22c55e' : '#888'
-                    }}>
-                      {src.rerank_score?.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-                <p style={s.chunkText}>{src.chunk_text}</p>
-              </div>
+        ) : (
+          <div style={s.messagesList}>
+            {messages.map((msg, i) => (
+              <Message key={i} msg={msg} />
             ))}
+            {loading && (
+              <div style={s.aiMsgRow}>
+                <div style={s.aiAvatar}>✦</div>
+                <div style={s.thinkingDots}>
+                  <span style={{ ...s.dot, animationDelay: '0ms' }} />
+                  <span style={{ ...s.dot, animationDelay: '150ms' }} />
+                  <span style={{ ...s.dot, animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
           </div>
+        )}
+      </div>
+
+      {/* Input bar */}
+      <div style={s.inputArea}>
+        <div style={s.inputBox}>
+          <input
+            ref={inputRef}
+            style={s.input}
+            placeholder="Ask Resolven AI about your documents..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            disabled={loading}
+          />
+          <button
+            style={{ ...s.sendBtn, ...((!input.trim() || loading) ? s.sendBtnDisabled : {}) }}
+            onClick={() => handleSend()}
+            disabled={!input.trim() || loading}
+          >
+            ↑
+          </button>
         </div>
-      )}
+        <p style={s.inputHint}>Press Enter to send · Answers grounded in uploaded documents</p>
+      </div>
+
+      <style>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+          40% { transform: translateY(-6px); opacity: 1; }
+        }
+      `}</style>
     </div>
   )
 }
 
 const s = {
-  page: { maxWidth: '820px', margin: '0 auto', padding: '48px 24px' },
-  header: { marginBottom: '28px' },
-  title: { fontSize: '26px', fontWeight: 700, marginBottom: '8px' },
-  subtitle: { color: '#666', fontSize: '14px', lineHeight: 1.6 },
-  inputCard: {
-    display: 'flex',
-    gap: '10px',
-    background: '#111118',
-    border: '1px solid #1e1e2e',
-    borderRadius: '14px',
-    padding: '8px',
-    marginBottom: '20px'
+  page: {
+    display: 'flex', flexDirection: 'column',
+    height: '100vh', background: '#f5f4f7', overflow: 'hidden'
+  },
+  topBar: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '14px 28px',
+    background: '#fff',
+    borderBottom: '1px solid #e8e4f0',
+    flexShrink: 0
+  },
+  topBarTitle: { fontSize: '14px', fontWeight: 600, color: '#1a1525' },
+  modelBadge: {
+    display: 'flex', alignItems: 'center', gap: '6px',
+    background: '#f5f4f7', border: '1px solid #e8e4f0',
+    borderRadius: '20px', padding: '4px 12px',
+    fontSize: '12px', color: '#6b6480', fontWeight: 500
+  },
+  modelDot: { width: '6px', height: '6px', borderRadius: '50%', background: '#6d4aff' },
+  messagesArea: {
+    flex: 1, overflow: 'auto', padding: '0 28px'
+  },
+  welcome: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    justifyContent: 'center', height: '100%',
+    textAlign: 'center', gap: '16px'
+  },
+  welcomeIcon: {
+    width: '64px', height: '64px',
+    background: 'linear-gradient(135deg, #6d4aff, #a78bfa)',
+    borderRadius: '20px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    marginBottom: '8px'
+  },
+  welcomeSymbol: { color: '#fff', fontSize: '28px' },
+  welcomeTitle: { fontSize: '22px', fontWeight: 700, color: '#1a1525' },
+  welcomeSub: { fontSize: '14px', color: '#6b6480', lineHeight: 1.7 },
+  suggestions: {
+    display: 'flex', flexWrap: 'wrap', gap: '8px',
+    justifyContent: 'center', marginTop: '8px', maxWidth: '560px'
+  },
+  suggChip: {
+    background: '#fff', border: '1px solid #e8e4f0',
+    borderRadius: '20px', padding: '8px 16px',
+    fontSize: '13px', color: '#6b6480',
+    cursor: 'pointer', transition: 'all 0.15s',
+    fontFamily: 'DM Sans, sans-serif'
+  },
+  messagesList: { padding: '24px 0', display: 'flex', flexDirection: 'column', gap: '20px' },
+  userMsgRow: { display: 'flex', justifyContent: 'flex-end' },
+  userMsg: {
+    background: '#6d4aff', color: '#fff',
+    borderRadius: '16px 16px 4px 16px',
+    padding: '12px 16px',
+    fontSize: '14px', lineHeight: 1.6,
+    maxWidth: '70%'
+  },
+  aiMsgRow: { display: 'flex', gap: '12px', alignItems: 'flex-start' },
+  aiAvatar: {
+    width: '32px', height: '32px', flexShrink: 0,
+    background: 'linear-gradient(135deg, #6d4aff, #a78bfa)',
+    borderRadius: '10px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', fontSize: '14px'
+  },
+  aiMsgContent: { flex: 1, maxWidth: '75%' },
+  aiAnswer: {
+    background: '#fff', border: '1px solid #e8e4f0',
+    borderRadius: '4px 16px 16px 16px',
+    padding: '12px 16px',
+    fontSize: '14px', lineHeight: 1.7, color: '#1a1525'
+  },
+  sourcesWrap: { marginTop: '8px' },
+  sourcesLabel: { fontSize: '11px', color: '#9b94b0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' },
+  sourcesList: { display: 'flex', flexWrap: 'wrap', gap: '6px' },
+  sourceChip: {
+    display: 'flex', alignItems: 'center', gap: '6px',
+    background: '#fff', border: '1px solid #e8e4f0',
+    borderRadius: '20px', padding: '4px 10px',
+    fontSize: '12px', color: '#6b6480'
+  },
+  sourceFile: { color: '#6b6480' },
+  sourceScore: { color: '#6d4aff', fontWeight: 600, fontFamily: 'DM Mono, monospace', fontSize: '11px' },
+  thinkingDots: { display: 'flex', gap: '4px', alignItems: 'center', padding: '16px' },
+  dot: {
+    width: '8px', height: '8px', borderRadius: '50%',
+    background: '#6d4aff', display: 'inline-block',
+    animation: 'bounce 1.2s ease-in-out infinite'
+  },
+  inputArea: {
+    padding: '16px 28px 20px',
+    background: '#fff',
+    borderTop: '1px solid #e8e4f0',
+    flexShrink: 0
+  },
+  inputBox: {
+    display: 'flex', gap: '8px',
+    background: '#f5f4f7', border: '1.5px solid #e8e4f0',
+    borderRadius: '14px', padding: '8px 8px 8px 16px',
+    alignItems: 'center'
   },
   input: {
-    flex: 1,
-    padding: '12px 14px',
-    background: 'transparent',
-    border: 'none',
-    color: '#fff',
-    fontSize: '15px',
-    outline: 'none'
+    flex: 1, background: 'transparent', border: 'none',
+    outline: 'none', fontSize: '14px', color: '#1a1525',
+    fontFamily: 'DM Sans, sans-serif'
   },
-  btn: {
-    padding: '12px 24px',
-    background: '#7c3aed',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '14px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap'
+  sendBtn: {
+    width: '36px', height: '36px',
+    background: '#6d4aff', color: '#fff',
+    border: 'none', borderRadius: '10px',
+    fontSize: '16px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0, transition: 'all 0.15s'
   },
-  btnDisabled: { background: '#1e1e2e', color: '#444', cursor: 'not-allowed' },
-  errorBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '14px',
-    background: '#1a0a0a',
-    border: '1px solid #7f1d1d',
-    borderRadius: '10px',
-    color: '#ef4444',
-    fontSize: '14px',
-    marginBottom: '20px'
-  },
-  loadingBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    padding: '20px',
-    background: '#111118',
-    borderRadius: '12px',
-    border: '1px solid #1e1e2e',
-    marginBottom: '20px'
-  },
-  loadingDots: { display: 'flex', gap: '4px' },
-  dot: {
-    width: '6px', height: '6px',
-    background: '#7c3aed',
-    borderRadius: '50%',
-    display: 'inline-block'
-  },
-  loadingText: { color: '#666', fontSize: '14px' },
-  answerCard: {
-    background: '#111118',
-    border: '1px solid #2a1f4e',
-    borderRadius: '14px',
-    padding: '24px',
-    marginBottom: '20px'
-  },
-  answerHeader: { marginBottom: '14px' },
-  aiLabel: { color: '#7c3aed', fontSize: '13px', fontWeight: 600, letterSpacing: '0.5px' },
-  answer: { color: '#e0e0e0', fontSize: '15px', lineHeight: 1.75 },
-  sourcesSection: {},
-  sourcesTitle: { color: '#555', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' },
-  sourceCard: {
-    background: '#0d0d14',
-    border: '1px solid #1a1a2e',
-    borderRadius: '10px',
-    padding: '14px 16px',
-    marginBottom: '10px'
-  },
-  sourceMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' },
-  sourceLeft: { display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' },
-  sourceFile: { color: '#ccc', fontSize: '13px', fontWeight: 500 },
-  sourceSheet: { background: '#1e1e2e', color: '#888', fontSize: '11px', padding: '2px 8px', borderRadius: '4px' },
-  sourceDept: { background: '#13111e', color: '#7c3aed', fontSize: '11px', padding: '2px 8px', borderRadius: '4px' },
-  sourceRight: { display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 },
-  scoreLabel: { color: '#444', fontSize: '11px' },
-  score: { fontSize: '13px', fontWeight: 600 },
-  chunkText: { color: '#666', fontSize: '13px', lineHeight: 1.6, margin: 0 }
+  sendBtnDisabled: { background: '#e8e4f0', color: '#9b94b0', cursor: 'not-allowed' },
+  inputHint: { fontSize: '11px', color: '#9b94b0', marginTop: '8px', textAlign: 'center' }
 }

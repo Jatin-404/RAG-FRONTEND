@@ -2,8 +2,22 @@ import { useState, useEffect } from 'react'
 import client from '../api/client'
 
 const DEPT_COLORS = {
-  hr: '#0ea5e9', legal: '#8b5cf6', finance: '#10b981',
-  engineering: '#f59e0b', operations: '#ef4444', general: '#6b7280'
+  hr: { bg: '#eff6ff', text: '#1d4ed8', dot: '#3b82f6' },
+  legal: { bg: '#f5f3ff', text: '#6d28d9', dot: '#7c3aed' },
+  finance: { bg: '#f0fdf4', text: '#166534', dot: '#16a34a' },
+  engineering: { bg: '#fffbeb', text: '#92400e', dot: '#d97706' },
+  operations: { bg: '#fef2f2', text: '#991b1b', dot: '#dc2626' },
+  general: { bg: '#f9fafb', text: '#374151', dot: '#9ca3af' }
+}
+
+function getDeptStyle(dept) {
+  return DEPT_COLORS[dept?.toLowerCase()] || DEPT_COLORS.general
+}
+
+function getFileIcon(filename) {
+  const ext = filename?.split('.').pop()?.toLowerCase()
+  const icons = { pdf: '📕', docx: '📘', doc: '📘', xlsx: '📗', xls: '📗', csv: '📊', json: '📋', png: '🖼', jpg: '🖼', jpeg: '🖼', odt: '📄' }
+  return icons[ext] || '📄'
 }
 
 export default function Documents() {
@@ -11,6 +25,7 @@ export default function Documents() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => { fetchDocuments() }, [])
 
@@ -38,95 +53,192 @@ export default function Documents() {
     }
   }
 
-  const getFileIcon = (filename) => {
-    const ext = filename?.split('.').pop()?.toLowerCase()
-    const icons = { pdf: '📕', docx: '📘', doc: '📘', xlsx: '📗', xls: '📗', csv: '📊', json: '📋', png: '🖼', jpg: '🖼', odt: '📄' }
-    return icons[ext] || '📄'
-  }
+  const filtered = docs.filter(d =>
+    d.filename.toLowerCase().includes(search.toLowerCase()) ||
+    d.department?.toLowerCase().includes(search.toLowerCase())
+  )
 
-  const getDeptColor = (dept) => DEPT_COLORS[dept?.toLowerCase()] || DEPT_COLORS.general
+  const totalChunks = docs.reduce((sum, d) => sum + d.chunk_count, 0)
 
   return (
     <div style={s.page}>
-      <div style={s.header}>
-        <div>
-          <h1 style={s.title}>Documents</h1>
-          <p style={s.subtitle}>All files ingested into the RAG system</p>
+      {/* Top bar */}
+      <div style={s.topBar}>
+        <span style={s.topBarTitle}>Documents</span>
+        <div style={s.topBarRight}>
+          <div style={s.statPill}>
+            <span style={s.statPillNum}>{docs.length}</span>
+            <span style={s.statPillLabel}>docs</span>
+          </div>
+          <div style={s.statPill}>
+            <span style={s.statPillNum}>{totalChunks}</span>
+            <span style={s.statPillLabel}>chunks</span>
+          </div>
         </div>
-        <div style={s.badge}>{docs.length} files</div>
       </div>
 
-      {loading && <div style={s.loadingBox}><p style={s.loadingText}>Loading documents...</p></div>}
-      {error && <div style={s.errorBox}><span>⚠</span> {error}</div>}
+      <div style={s.content}>
+        {/* Search bar */}
+        {docs.length > 0 && (
+          <div style={s.searchBar}>
+            <span style={s.searchIcon}>⌕</span>
+            <input
+              style={s.searchInput}
+              placeholder="Search by filename or department..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+        )}
 
-      {!loading && !error && docs.length === 0 && (
-        <div style={s.emptyBox}>
-          <p style={s.emptyIcon}>📭</p>
-          <p style={s.emptyText}>No documents ingested yet</p>
-          <p style={s.emptySubtext}>Upload a file to get started</p>
-        </div>
-      )}
+        {loading && (
+          <div style={s.centerMsg}>
+            <p style={s.loadingText}>Loading documents...</p>
+          </div>
+        )}
 
-      {docs.length > 0 && (
-        <div style={s.grid}>
-          {docs.map((doc, i) => (
-            <div key={i} style={s.card}>
-              <div style={s.cardTop}>
-                <span style={s.fileIcon}>{getFileIcon(doc.filename)}</span>
-                <div style={s.cardInfo}>
-                  <p style={s.filename}>{doc.filename}</p>
-                  <p style={s.date}>{new Date(doc.created_at).toLocaleDateString('en-IN', {
-                    day: 'numeric', month: 'short', year: 'numeric'
-                  })}</p>
-                </div>
-                <button
-                  style={{ ...s.deleteBtn, ...(deleting === doc.document_id ? s.deletingBtn : {}) }}
-                  onClick={() => handleDelete(doc.document_id, doc.filename)}
-                  disabled={deleting === doc.document_id}
-                  title="Delete document"
-                >
-                  {deleting === doc.document_id ? '...' : '🗑'}
-                </button>
-              </div>
-              <div style={s.cardBottom}>
-                <span style={{ ...s.deptTag, background: getDeptColor(doc.department) + '22', color: getDeptColor(doc.department) }}>
-                  {doc.department}
-                </span>
-                <span style={s.domainTag}>{doc.domain}</span>
-                <span style={s.chunkCount}>{doc.chunk_count} chunks</span>
-              </div>
+        {error && (
+          <div style={s.errorBox}><span>⚠</span> {error}</div>
+        )}
+
+        {!loading && !error && docs.length === 0 && (
+          <div style={s.emptyState}>
+            <div style={s.emptyIcon}>📭</div>
+            <p style={s.emptyTitle}>No documents yet</p>
+            <p style={s.emptySub}>Upload files to build your knowledge base</p>
+          </div>
+        )}
+
+        {filtered.length > 0 && (
+          <div style={s.table}>
+            <div style={s.tableHeader}>
+              <span style={{ ...s.th, flex: 3 }}>File</span>
+              <span style={{ ...s.th, flex: 1.5 }}>Department</span>
+              <span style={{ ...s.th, flex: 1 }}>Domain</span>
+              <span style={{ ...s.th, flex: 1 }}>Chunks</span>
+              <span style={{ ...s.th, flex: 1.2 }}>Ingested</span>
+              <span style={{ ...s.th, width: '48px' }}></span>
             </div>
-          ))}
-        </div>
-      )}
+            {filtered.map((doc, i) => {
+              const dept = getDeptStyle(doc.department)
+              return (
+                <div key={i} style={{ ...s.tableRow, ...(i % 2 === 0 ? s.tableRowAlt : {}) }}>
+                  <div style={{ ...s.td, flex: 3, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={s.fileIcon}>{getFileIcon(doc.filename)}</span>
+                    <span style={s.filename}>{doc.filename}</span>
+                  </div>
+                  <div style={{ ...s.td, flex: 1.5 }}>
+                    <span style={{ ...s.deptBadge, background: dept.bg, color: dept.text }}>
+                      <span style={{ ...s.deptDot, background: dept.dot }} />
+                      {doc.department}
+                    </span>
+                  </div>
+                  <div style={{ ...s.td, flex: 1 }}>
+                    <span style={s.domainText}>{doc.domain}</span>
+                  </div>
+                  <div style={{ ...s.td, flex: 1 }}>
+                    <span style={s.chunkNum}>{doc.chunk_count}</span>
+                  </div>
+                  <div style={{ ...s.td, flex: 1.2 }}>
+                    <span style={s.dateText}>
+                      {new Date(doc.created_at).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short', year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <div style={{ ...s.td, width: '48px', justifyContent: 'center' }}>
+                    <button
+                      style={{ ...s.deleteBtn, ...(deleting === doc.document_id ? s.deletingBtn : {}) }}
+                      onClick={() => handleDelete(doc.document_id, doc.filename)}
+                      disabled={deleting === doc.document_id}
+                      title="Delete"
+                    >
+                      {deleting === doc.document_id ? '…' : '🗑'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && docs.length > 0 && (
+          <div style={s.centerMsg}>
+            <p style={s.loadingText}>No results for "{search}"</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
 const s = {
-  page: { maxWidth: '960px', margin: '0 auto', padding: '48px 24px' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' },
-  title: { fontSize: '26px', fontWeight: 700, marginBottom: '8px' },
-  subtitle: { color: '#666', fontSize: '14px' },
-  badge: { background: '#111118', border: '1px solid #1e1e2e', color: '#888', padding: '6px 14px', borderRadius: '20px', fontSize: '13px' },
-  loadingBox: { padding: '40px', textAlign: 'center' },
-  loadingText: { color: '#555' },
-  errorBox: { display: 'flex', alignItems: 'center', gap: '8px', padding: '14px', background: '#1a0a0a', border: '1px solid #7f1d1d', borderRadius: '10px', color: '#ef4444', fontSize: '14px' },
-  emptyBox: { textAlign: 'center', padding: '80px 24px' },
-  emptyIcon: { fontSize: '48px', marginBottom: '16px' },
-  emptyText: { color: '#ccc', fontSize: '18px', fontWeight: 600, marginBottom: '8px' },
-  emptySubtext: { color: '#555', fontSize: '14px' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' },
-  card: { background: '#111118', border: '1px solid #1e1e2e', borderRadius: '14px', padding: '20px' },
-  cardTop: { display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'flex-start' },
-  fileIcon: { fontSize: '32px', flexShrink: 0 },
-  cardInfo: { flex: 1, minWidth: 0 },
-  filename: { color: '#fff', fontWeight: 600, fontSize: '14px', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  date: { color: '#555', fontSize: '12px' },
-  deleteBtn: { background: 'transparent', border: '1px solid #2a2a3e', borderRadius: '8px', color: '#666', cursor: 'pointer', padding: '6px 10px', fontSize: '14px', flexShrink: 0, transition: 'all 0.15s' },
-  deletingBtn: { opacity: 0.5, cursor: 'not-allowed' },
-  cardBottom: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' },
-  deptTag: { fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.3px' },
-  domainTag: { background: '#1a1a2e', color: '#666', fontSize: '11px', padding: '3px 10px', borderRadius: '20px' },
-  chunkCount: { color: '#444', fontSize: '11px', marginLeft: 'auto' }
+  page: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f4f7', overflow: 'hidden' },
+  topBar: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '14px 28px', background: '#fff', borderBottom: '1px solid #e8e4f0', flexShrink: 0
+  },
+  topBarTitle: { fontSize: '14px', fontWeight: 600, color: '#1a1525' },
+  topBarRight: { display: 'flex', gap: '8px' },
+  statPill: {
+    display: 'flex', alignItems: 'center', gap: '4px',
+    background: '#f5f4f7', border: '1px solid #e8e4f0',
+    borderRadius: '20px', padding: '4px 12px'
+  },
+  statPillNum: { fontSize: '13px', fontWeight: 700, color: '#1a1525', fontFamily: 'DM Mono, monospace' },
+  statPillLabel: { fontSize: '12px', color: '#9b94b0' },
+  content: { flex: 1, overflow: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' },
+  searchBar: {
+    display: 'flex', alignItems: 'center', gap: '10px',
+    background: '#fff', border: '1px solid #e8e4f0',
+    borderRadius: '10px', padding: '10px 14px'
+  },
+  searchIcon: { color: '#9b94b0', fontSize: '16px' },
+  searchInput: {
+    flex: 1, background: 'none', border: 'none', outline: 'none',
+    fontSize: '13px', color: '#1a1525', fontFamily: 'DM Sans, sans-serif'
+  },
+  table: {
+    background: '#fff', borderRadius: '12px',
+    border: '1px solid #e8e4f0', overflow: 'hidden'
+  },
+  tableHeader: {
+    display: 'flex', alignItems: 'center',
+    padding: '10px 16px', borderBottom: '1px solid #f0eef5',
+    background: '#faf9ff'
+  },
+  th: { fontSize: '11px', fontWeight: 600, color: '#9b94b0', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  tableRow: { display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #f9f8fc' },
+  tableRowAlt: { background: '#fdfcff' },
+  td: { display: 'flex', alignItems: 'center' },
+  fileIcon: { fontSize: '18px', flexShrink: 0 },
+  filename: { fontSize: '13px', fontWeight: 500, color: '#1a1525', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  deptBadge: {
+    display: 'inline-flex', alignItems: 'center', gap: '5px',
+    padding: '3px 10px', borderRadius: '20px',
+    fontSize: '11px', fontWeight: 600
+  },
+  deptDot: { width: '5px', height: '5px', borderRadius: '50%', flexShrink: 0 },
+  domainText: { fontSize: '12px', color: '#6b6480' },
+  chunkNum: { fontSize: '13px', fontWeight: 600, color: '#1a1525', fontFamily: 'DM Mono, monospace' },
+  dateText: { fontSize: '12px', color: '#9b94b0' },
+  deleteBtn: {
+    background: 'none', border: '1px solid #f0eef5',
+    borderRadius: '6px', padding: '5px 8px',
+    cursor: 'pointer', fontSize: '13px',
+    transition: 'all 0.15s', color: '#9b94b0'
+  },
+  deletingBtn: { opacity: 0.4, cursor: 'not-allowed' },
+  centerMsg: { display: 'flex', justifyContent: 'center', padding: '40px' },
+  loadingText: { color: '#9b94b0', fontSize: '14px' },
+  errorBox: {
+    display: 'flex', alignItems: 'center', gap: '8px',
+    padding: '14px', background: '#fef2f2',
+    border: '1px solid #fecaca', borderRadius: '10px',
+    color: '#dc2626', fontSize: '14px'
+  },
+  emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 24px', gap: '12px' },
+  emptyIcon: { fontSize: '48px' },
+  emptyTitle: { fontSize: '16px', fontWeight: 600, color: '#6b6480' },
+  emptySub: { fontSize: '13px', color: '#9b94b0' }
 }

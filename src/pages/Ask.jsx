@@ -87,32 +87,81 @@ export default function Ask() {
     const question = q || input.trim()
     if (!question || loading) return
     setInput('')
-
+  
     let currentSessionId = sessionId
-
-    // Create new session if none
+  
     if (!currentSessionId) {
       try {
         const res = await client.post('/api/v1/chats/')
         currentSessionId = res.data.id
-        justCreated.current = true  // prevent useEffect from wiping messages
+        justCreated.current = true
         navigate(`/ask/${currentSessionId}`, { replace: true })
       } catch {
         return
       }
     }
-
-    // Add user message immediately so user sees it right away
+  
+    // Add user message immediately
     setMessages(prev => [...prev, { role: 'user', content: question }])
     setLoading(true)
-
+  
     try {
-      const res = await client.post(`/api/v1/chats/${currentSessionId}/ask`, {
-        question, top_k: 5
-      })
-      setMessages(prev => [...prev, {
-        role: 'ai', content: res.data.answer, sources: res.data.sources
-      }])
+      const response = await fetch(
+        `http://localhost:8000/api/v1/chats/${currentSessionId}/ask/stream`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question, top_k: 5 })
+        }
+      )
+  
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let sources = []
+      let streamingMsgAdded = false
+  
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+  
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '))
+  
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.replace('data: ', ''))
+  
+            // First event — sources
+            if (data.type === 'sources') {
+              sources = data.sources
+              continue
+            }
+  
+            // Token event
+            if (!streamingMsgAdded) {
+              // Add empty AI message to start streaming into
+              setMessages(prev => [...prev, { role: 'ai', content: '', sources }])
+              streamingMsgAdded = true
+            }
+  
+            if (data.token) {
+              // Append token to last message
+              setMessages(prev => {
+                const updated = [...prev]
+                const last = updated[updated.length - 1]
+                updated[updated.length - 1] = {
+                  ...last,
+                  content: last.content + data.token
+                }
+                return updated
+              })
+            }
+          } catch {
+            // skip malformed lines
+          }
+        }
+      }
+  
       window.dispatchEvent(new Event('chat-updated'))
     } catch {
       setMessages(prev => [...prev, {
@@ -122,7 +171,6 @@ export default function Ask() {
       setLoading(false)
     }
   }
-
   const isEmpty = messages.length === 0
 
   return (
@@ -154,7 +202,7 @@ export default function Ask() {
         ) : (
           <div style={s.messagesList}>
             {messages.map((msg, i) => <Message key={i} msg={msg} />)}
-            {loading && (
+            {loading && messages[messages.length - 1]?.role !== 'ai' && (
               <div style={s.aiMsgRow}>
                 <div style={s.aiAvatar}>✦</div>
                 <div style={s.thinkingDots}>
